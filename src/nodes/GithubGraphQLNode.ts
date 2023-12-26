@@ -19,43 +19,59 @@ import type {
   Project,
   Rivet,
 } from "@ironclad/rivet-core";
+import { Octokit } from "../octokit";
 
 // This defines your new type of node.
-export type ExamplePluginNode = ChartNode<
-  "examplePlugin",
-  ExamplePluginNodeData
+export type GithubGraphQLNode = ChartNode<
+  "githubPlugin",
+  GithubPluginNodeData
 >;
 
 // This defines the data that your new node will store.
-export type ExamplePluginNodeData = {
-  someData: string;
+export type GithubPluginNodeData = {
+  query: string;
 
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
-  useSomeDataInput?: boolean;
+  useQueryInput?: boolean;
 };
 
 // Make sure you export functions that take in the Rivet library, so that you do not
 // import the entire Rivet core library in your plugin.
-export function examplePluginNode(rivet: typeof Rivet) {
+export function githubGraphQLNode(rivet: typeof Rivet) {
   // This is your main node implementation. It is an object that implements the PluginNodeImpl interface.
-  const ExamplePluginNodeImpl: PluginNodeImpl<ExamplePluginNode> = {
+  const GithubGraphQLNodeImpl: PluginNodeImpl<GithubGraphQLNode> = {
     // This should create a new instance of your node type from scratch.
-    create(): ExamplePluginNode {
-      const node: ExamplePluginNode = {
+    create(): GithubGraphQLNode {
+      const node: GithubGraphQLNode = {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId<NodeId>(),
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World",
+          query:
+          `
+          query paginate($cursor: String) {
+            repository(owner: "some-user", name: "some-repo") {
+                issues(first: 100, after: $cursor) {
+                    nodes {
+                        title
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+          }
+          `,
         },
 
         // This is the default title of your node.
-        title: "Example Plugin Node",
+        title: "GitHub GraphQL Node",
 
         // This must match the type of your node.
-        type: "examplePlugin",
+        type: "githubPlugin",
 
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
@@ -70,18 +86,18 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(
-      data: ExamplePluginNodeData,
+      data: GithubPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
     ): NodeInputDefinition[] {
       const inputs: NodeInputDefinition[] = [];
 
-      if (data.useSomeDataInput) {
+      if (data.useQueryInput) {
         inputs.push({
-          id: "someData" as PortId,
+          id: "query" as PortId,
           dataType: "string",
-          title: "Some Data",
+          title: "GraphQL Query",
         });
       }
 
@@ -91,16 +107,16 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(
-      _data: ExamplePluginNodeData,
+      _data: GithubPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
     ): NodeOutputDefinition[] {
       return [
         {
-          id: "someData" as PortId,
+          id: "response" as PortId,
           dataType: "string",
-          title: "Some Data",
+          title: "GraphQL Response",
         },
       ];
     },
@@ -108,23 +124,23 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData(): NodeUIData {
       return {
-        contextMenuTitle: "Example Plugin",
-        group: "Example",
-        infoBoxBody: "This is an example plugin node.",
-        infoBoxTitle: "Example Plugin Node",
+        contextMenuTitle: "GitHub GraphQL",
+        group: "GitHub",
+        infoBoxBody: "Makes a GraphQL request to GitHub.",
+        infoBoxTitle: "GitHub GraphQL Node",
       };
     },
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: ExamplePluginNodeData
-    ): EditorDefinition<ExamplePluginNode>[] {
+      _data: GithubPluginNodeData
+    ): EditorDefinition<GithubGraphQLNode>[] {
       return [
         {
           type: "string",
-          dataKey: "someData",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          dataKey: "query",
+          useInputToggleDataKey: "useQueryInput",
+          label: "GraphQL Query",
         },
       ];
     },
@@ -132,11 +148,11 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: ExamplePluginNodeData
+      data: GithubPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        Example Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+        GitHub GraphQL Node
+        Data: ${data.useQueryInput ? "(Using Input)" : data.query}
       `;
     },
 
@@ -144,21 +160,34 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(
-      data: ExamplePluginNodeData,
+      data: GithubPluginNodeData,
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
-      const someData = rivet.getInputOrData(
+
+      const query = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "query",
         "string"
       );
 
+      const token = _context.getPluginConfig("personalAccessToken");
+
+      if (!token) {
+        throw new Error("No token. Please set a Personal Access Token in the plugin settings.");
+      }
+
+      const octokit = new Octokit({
+        userAgent: "rivet-plugin-github",
+        auth: token,
+      });
+
+      const result = await octokit.graphql.paginate(query);
       return {
-        ["someData" as PortId]: {
+        ["response" as PortId]: {
           type: "string",
-          value: someData,
+          value: JSON.stringify(result, null, 2),
         },
       };
     },
@@ -166,11 +195,11 @@ export function examplePluginNode(rivet: typeof Rivet) {
 
   // Once a node is defined, you must pass it to rivet.pluginNodeDefinition, which will return a valid
   // PluginNodeDefinition object.
-  const examplePluginNode = rivet.pluginNodeDefinition(
-    ExamplePluginNodeImpl,
-    "Example Plugin Node"
+  const githubPluginNode = rivet.pluginNodeDefinition(
+    GithubGraphQLNodeImpl,
+    "GitHub GraphQL Node"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.
-  return examplePluginNode;
+  return githubPluginNode;
 }

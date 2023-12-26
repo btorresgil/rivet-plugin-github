@@ -8392,7 +8392,7 @@ function githubGraphQLNode(rivet) {
       return [
         {
           id: "response",
-          dataType: "string",
+          dataType: "object",
           title: "GraphQL Response"
         }
       ];
@@ -8455,8 +8455,8 @@ function githubGraphQLNode(rivet) {
       const result = await graphqlFunction(query);
       return {
         ["response"]: {
-          type: "string",
-          value: JSON.stringify(result, null, 2)
+          type: "object",
+          value: result
         }
       };
     }

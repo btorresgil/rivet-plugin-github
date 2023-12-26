@@ -114,7 +114,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       return [
         {
           id: "response" as PortId,
-          dataType: "string",
+          dataType: "object",
           title: "GraphQL Response",
         },
       ];
@@ -197,8 +197,8 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       const result = await graphqlFunction(query);
       return {
         ["response" as PortId]: {
-          type: "string",
-          value: JSON.stringify(result, null, 2),
+          type: "object",
+          value: result,
         },
       };
     },

@@ -68,7 +68,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         },
 
         // This is the default title of your node.
-        title: "GitHub GraphQL Node",
+        title: "GitHub GraphQL",
 
         // This must match the type of your node.
         type: "githubPlugin",
@@ -127,7 +127,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         contextMenuTitle: "GitHub GraphQL",
         group: "GitHub",
         infoBoxBody: "Makes a GraphQL request to GitHub.",
-        infoBoxTitle: "GitHub GraphQL Node",
+        infoBoxTitle: "GitHub GraphQL",
       };
     },
 
@@ -151,7 +151,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       data: GithubPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        GitHub GraphQL Node
+        GitHub GraphQL
         Data: ${data.useQueryInput ? "(Using Input)" : data.query}
       `;
     },
@@ -197,7 +197,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const githubPluginNode = rivet.pluginNodeDefinition(
     GithubGraphQLNodeImpl,
-    "GitHub GraphQL Node"
+    "GitHub GraphQL"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

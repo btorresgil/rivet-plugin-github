@@ -22,10 +22,7 @@ import type {
 import { Octokit } from "../octokit";
 
 // This defines your new type of node.
-export type GithubGraphQLNode = ChartNode<
-  "githubPlugin",
-  GithubPluginNodeData
->;
+export type GithubGraphQLNode = ChartNode<"githubPlugin", GithubPluginNodeData>;
 
 // This defines the data that your new node will store.
 export type GithubPluginNodeData = {
@@ -52,8 +49,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         // This is the default data that your node will store
         data: {
           paginate: true,
-          query:
-          `
+          query: `
           query paginate($cursor: String) {
             repository(owner: "some-user", name: "some-repo") {
                 issues(first: 100, after: $cursor) {
@@ -92,7 +88,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       data: GithubPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
-      _project: Project
+      _project: Project,
     ): NodeInputDefinition[] {
       const inputs: NodeInputDefinition[] = [];
 
@@ -113,7 +109,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       _data: GithubPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
-      _project: Project
+      _project: Project,
     ): NodeOutputDefinition[] {
       return [
         {
@@ -136,7 +132,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: GithubPluginNodeData
+      _data: GithubPluginNodeData,
     ): EditorDefinition<GithubGraphQLNode>[] {
       return [
         {
@@ -156,7 +152,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: GithubPluginNodeData
+      data: GithubPluginNodeData,
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
         GitHub GraphQL
@@ -170,27 +166,23 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     async process(
       data: GithubPluginNodeData,
       inputData: Inputs,
-      _context: InternalProcessContext
+      _context: InternalProcessContext,
     ): Promise<Outputs> {
-
-      const query = rivet.getInputOrData(
-        data,
-        inputData,
-        "query",
-        "string"
-      );
+      const query = rivet.getInputOrData(data, inputData, "query", "string");
 
       const paginate = rivet.getInputOrData(
         data,
         inputData,
         "paginate",
-        "boolean"
+        "boolean",
       );
 
       const token = _context.getPluginConfig("personalAccessToken");
 
       if (!token) {
-        throw new Error("No token. Please set a Personal Access Token in the plugin settings.");
+        throw new Error(
+          "No token. Please set a Personal Access Token in the plugin settings.",
+        );
       }
 
       const octokit = new Octokit({
@@ -216,7 +208,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const githubPluginNode = rivet.pluginNodeDefinition(
     GithubGraphQLNodeImpl,
-    "GitHub GraphQL"
+    "GitHub GraphQL",
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

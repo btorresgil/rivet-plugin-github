@@ -8434,12 +8434,7 @@ function githubGraphQLNode(rivet) {
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(data, inputData, _context) {
-      const query = rivet.getInputOrData(
-        data,
-        inputData,
-        "query",
-        "string"
-      );
+      const query = rivet.getInputOrData(data, inputData, "query", "string");
       const paginate = rivet.getInputOrData(
         data,
         inputData,
@@ -8448,7 +8443,9 @@ function githubGraphQLNode(rivet) {
       );
       const token = _context.getPluginConfig("personalAccessToken");
       if (!token) {
-        throw new Error("No token. Please set a Personal Access Token in the plugin settings.");
+        throw new Error(
+          "No token. Please set a Personal Access Token in the plugin settings."
+        );
       }
       const octokit = new Uo({
         userAgent: "rivet-plugin-github",

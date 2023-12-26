@@ -24,8 +24,10 @@ const plugin: RivetPluginInitializer = (rivet) => {
       personalAccessToken: {
         type: "string",
         label: "Personal Access Token (PAT)",
-        description: "A Github Personal Access Token (PAT) with the needed scope.",
-        helperText: "A Github Personal Access Token (PAT) with the needed scope.",
+        description:
+          "A Github Personal Access Token (PAT) with the needed scope.",
+        helperText:
+          "A Github Personal Access Token (PAT) with the needed scope.",
       },
     },
 

@@ -8343,6 +8343,7 @@ function githubGraphQLNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
+          paginate: true,
           query: `
           query paginate($cursor: String) {
             repository(owner: "some-user", name: "some-repo") {
@@ -8360,7 +8361,7 @@ function githubGraphQLNode(rivet) {
           `
         },
         // This is the default title of your node.
-        title: "GitHub GraphQL Node",
+        title: "GitHub GraphQL",
         // This must match the type of your node.
         type: "githubPlugin",
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
@@ -8402,7 +8403,7 @@ function githubGraphQLNode(rivet) {
         contextMenuTitle: "GitHub GraphQL",
         group: "GitHub",
         infoBoxBody: "Makes a GraphQL request to GitHub.",
-        infoBoxTitle: "GitHub GraphQL Node"
+        infoBoxTitle: "GitHub GraphQL"
       };
     },
     // This function defines all editors that appear when you edit your node.
@@ -8413,6 +8414,11 @@ function githubGraphQLNode(rivet) {
           dataKey: "query",
           useInputToggleDataKey: "useQueryInput",
           label: "GraphQL Query"
+        },
+        {
+          type: "toggle",
+          label: "Enable Pagination",
+          dataKey: "paginate"
         }
       ];
     },
@@ -8420,7 +8426,7 @@ function githubGraphQLNode(rivet) {
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-        GitHub GraphQL Node
+        GitHub GraphQL
         Data: ${data.useQueryInput ? "(Using Input)" : data.query}
       `;
     },
@@ -8434,6 +8440,12 @@ function githubGraphQLNode(rivet) {
         "query",
         "string"
       );
+      const paginate = rivet.getInputOrData(
+        data,
+        inputData,
+        "paginate",
+        "boolean"
+      );
       const token = _context.getPluginConfig("personalAccessToken");
       if (!token) {
         throw new Error("No token. Please set a Personal Access Token in the plugin settings.");
@@ -8442,7 +8454,8 @@ function githubGraphQLNode(rivet) {
         userAgent: "rivet-plugin-github",
         auth: token
       });
-      const result = await octokit.graphql.paginate(query);
+      const graphqlFunction = paginate ? octokit.graphql.paginate : octokit.graphql;
+      const result = await graphqlFunction(query);
       return {
         ["response"]: {
           type: "string",
@@ -8453,7 +8466,7 @@ function githubGraphQLNode(rivet) {
   };
   const githubPluginNode = rivet.pluginNodeDefinition(
     GithubGraphQLNodeImpl,
-    "GitHub GraphQL Node"
+    "GitHub GraphQL"
   );
   return githubPluginNode;
 }

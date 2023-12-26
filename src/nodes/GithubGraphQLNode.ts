@@ -34,6 +34,8 @@ export type GithubPluginNodeData = {
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
   useQueryInput?: boolean;
+
+  paginate: boolean;
 };
 
 // Make sure you export functions that take in the Rivet library, so that you do not
@@ -49,6 +51,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
+          paginate: true,
           query:
           `
           query paginate($cursor: String) {
@@ -142,6 +145,11 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
           useInputToggleDataKey: "useQueryInput",
           label: "GraphQL Query",
         },
+        {
+          type: "toggle",
+          label: "Enable Pagination",
+          dataKey: "paginate",
+        },
       ];
     },
 
@@ -172,6 +180,13 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         "string"
       );
 
+      const paginate = rivet.getInputOrData(
+        data,
+        inputData,
+        "paginate",
+        "boolean"
+      );
+
       const token = _context.getPluginConfig("personalAccessToken");
 
       if (!token) {
@@ -183,7 +198,11 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         auth: token,
       });
 
-      const result = await octokit.graphql.paginate(query);
+      const graphqlFunction = paginate
+        ? octokit.graphql.paginate
+        : octokit.graphql;
+
+      const result = await graphqlFunction(query);
       return {
         ["response" as PortId]: {
           type: "string",

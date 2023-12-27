@@ -22,10 +22,13 @@ import type {
 import { Octokit } from "../octokit";
 
 // This defines your new type of node.
-export type GithubGraphQLNode = ChartNode<"githubPlugin", GithubPluginNodeData>;
+export type GithubGraphQLNode = ChartNode<
+  "githubGraphQL",
+  GithubGraphQLNodeData
+>;
 
 // This defines the data that your new node will store.
-export type GithubPluginNodeData = {
+export type GithubGraphQLNodeData = {
   query: string;
 
   // It is a good idea to include useXInput fields for any inputs you have, so that
@@ -70,7 +73,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
         title: "GitHub GraphQL",
 
         // This must match the type of your node.
-        type: "githubPlugin",
+        type: "githubGraphQL",
 
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
@@ -85,7 +88,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(
-      data: GithubPluginNodeData,
+      data: GithubGraphQLNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project,
@@ -106,7 +109,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(
-      _data: GithubPluginNodeData,
+      _data: GithubGraphQLNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project,
@@ -132,7 +135,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: GithubPluginNodeData,
+      _data: GithubGraphQLNodeData,
     ): EditorDefinition<GithubGraphQLNode>[] {
       return [
         {
@@ -152,7 +155,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: GithubPluginNodeData,
+      data: GithubGraphQLNodeData,
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
         Query: ${data.useQueryInput ? "(Using Input)" : data.query}
@@ -163,7 +166,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(
-      data: GithubPluginNodeData,
+      data: GithubGraphQLNodeData,
       inputData: Inputs,
       _context: InternalProcessContext,
     ): Promise<Outputs> {

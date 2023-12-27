@@ -8363,7 +8363,7 @@ function githubGraphQLNode(rivet) {
         // This is the default title of your node.
         title: "GitHub GraphQL",
         // This must match the type of your node.
-        type: "githubPlugin",
+        type: "githubGraphQL",
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
           x: 0,
@@ -8484,7 +8484,7 @@ function githubRestNode(rivet) {
         // This is the default title of your node.
         title: "GitHub REST",
         // This must match the type of your node.
-        type: "githubPlugin",
+        type: "githubRest",
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
           x: 0,
@@ -8593,7 +8593,7 @@ function githubRestNode(rivet) {
         auth: token
       });
       const requestFunction = paginate ? octokit.paginate : octokit.request;
-      const requestParams = { per_page: 100, ...params };
+      const requestParams = paginate ? { per_page: 100, ...params } : params;
       const result = await requestFunction(route, requestParams);
       return {
         ["response"]: {

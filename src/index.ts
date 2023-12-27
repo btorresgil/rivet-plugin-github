@@ -4,12 +4,14 @@
 import type { RivetPlugin, RivetPluginInitializer } from "@ironclad/rivet-core";
 
 import { githubGraphQLNode } from "./nodes/GithubGraphQLNode.js";
+import { githubRestNode } from "./nodes/GithubRestNode.js";
 
 // A Rivet plugin must default export a plugin initializer function. This takes in the Rivet library as its
 // only parameter. This function must return a valid RivetPlugin object.
 const plugin: RivetPluginInitializer = (rivet) => {
   // Initialize any nodes in here in the same way, by passing them the Rivet library.
   const graphQLNode = githubGraphQLNode(rivet);
+  const RestNode = githubRestNode(rivet);
 
   // The plugin object is the definition for your plugin.
   const githubPlugin: RivetPlugin = {
@@ -43,6 +45,7 @@ const plugin: RivetPluginInitializer = (rivet) => {
     // function, which you can use to register your nodes.
     register: (register) => {
       register(graphQLNode);
+      register(RestNode);
     },
   };
 

@@ -8426,8 +8426,7 @@ function githubGraphQLNode(rivet) {
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-        GitHub GraphQL
-        Data: ${data.useQueryInput ? "(Using Input)" : data.query}
+        Query: ${data.useQueryInput ? "(Using Input)" : data.query}
       `;
     },
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -8468,9 +8467,153 @@ function githubGraphQLNode(rivet) {
   return githubPluginNode;
 }
 
+// src/nodes/GithubRestNode.ts
+function githubRestNode(rivet) {
+  const GithubRestNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        // This is the default data that your node will store
+        data: {
+          paginate: false,
+          route: `GET /user`,
+          params: "{}"
+        },
+        // This is the default title of your node.
+        title: "GitHub REST",
+        // This must match the type of your node.
+        type: "githubPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      if (data.useRouteInput) {
+        inputs.push({
+          id: "query",
+          dataType: "string",
+          title: "REST Route"
+        });
+      }
+      if (data.useParamsInput) {
+        inputs.push({
+          id: "param",
+          dataType: "string",
+          title: "REST Params"
+        });
+      }
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "response",
+          dataType: "object",
+          title: "REST Response"
+        }
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "GitHub REST",
+        group: "GitHub",
+        infoBoxBody: "Makes a REST API request to GitHub.",
+        infoBoxTitle: "GitHub REST"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        {
+          type: "string",
+          dataKey: "route",
+          useInputToggleDataKey: "useRouteInput",
+          label: "REST Route"
+        },
+        {
+          type: "string",
+          dataKey: "params",
+          useInputToggleDataKey: "useParamsInput",
+          label: "REST Params"
+        },
+        {
+          type: "toggle",
+          label: "Enable Pagination",
+          dataKey: "paginate"
+        }
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+        Route: ${data.useRouteInput ? "(Using Input)" : data.route}
+        Params: ${data.useParamsInput ? "(Using Input)" : data.params}
+      `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      const route = rivet.getInputOrData(data, inputData, "route", "string");
+      const paramsString = rivet.getInputOrData(
+        data,
+        inputData,
+        "params",
+        "string"
+      );
+      const params = JSON.parse(paramsString);
+      const paginate = rivet.getInputOrData(
+        data,
+        inputData,
+        "paginate",
+        "boolean"
+      );
+      const token = _context.getPluginConfig("personalAccessToken");
+      if (!token) {
+        throw new Error(
+          "No token. Please set a Personal Access Token in the plugin settings."
+        );
+      }
+      const octokit = new Uo({
+        userAgent: "rivet-plugin-github",
+        auth: token
+      });
+      const requestFunction = paginate ? octokit.paginate : octokit.request;
+      const requestParams = { per_page: 100, ...params };
+      const result = await requestFunction(route, requestParams);
+      return {
+        ["response"]: {
+          type: "object",
+          value: result
+        }
+      };
+    }
+  };
+  const githubPluginNode = rivet.pluginNodeDefinition(
+    GithubRestNodeImpl,
+    "GitHub REST"
+  );
+  return githubPluginNode;
+}
+
 // src/index.ts
 var plugin = (rivet) => {
   const graphQLNode = githubGraphQLNode(rivet);
+  const RestNode = githubRestNode(rivet);
   const githubPlugin = {
     // The ID of your plugin should be unique across all plugins.
     id: "github-plugin",
@@ -8496,6 +8639,7 @@ var plugin = (rivet) => {
     // function, which you can use to register your nodes.
     register: (register) => {
       register(graphQLNode);
+      register(RestNode);
     }
   };
   return githubPlugin;

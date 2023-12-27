@@ -155,8 +155,7 @@ export function githubGraphQLNode(rivet: typeof Rivet) {
       data: GithubPluginNodeData,
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        GitHub GraphQL
-        Data: ${data.useQueryInput ? "(Using Input)" : data.query}
+        Query: ${data.useQueryInput ? "(Using Input)" : data.query}
       `;
     },
 
